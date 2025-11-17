@@ -20,7 +20,7 @@ const InfoChip: React.FC<{children: React.ReactNode}> = ({ children }) => (
 
 const DetailItem: React.FC<{icon: React.ReactNode; label: string; children: React.ReactNode;}> = ({ icon, label, children }) => (
     <div className="flex items-start space-x-3">
-        <div className="flex-shrink-0 text-gray-400 mt-0.5">{icon}</div>
+        <div className="flex-shrink-0 text-gray-400 dark:text-gray-500 mt-0.5">{icon}</div>
         <div>
             <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
             {children}
@@ -93,7 +93,7 @@ const InvoiceDetail: React.FC<InvoiceDetailProps> = ({ invoice, onClose }) => {
                 <DownloadIcon className="w-4 h-4 mr-2" />
                 Descarregar
             </button>
-            <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600">
+            <button type="button" onClick={onClose} className="text-gray-400 dark:text-gray-300 hover:text-gray-600 dark:hover:text-white p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600">
                 <span className="sr-only">Fechar</span>
                 <XIcon className="h-5 w-5" />
             </button>

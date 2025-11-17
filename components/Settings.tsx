@@ -21,8 +21,7 @@ const SelectInput: React.FC<{ id: string, defaultValue: string }> = ({ id, child
      <select
         id={id}
         defaultValue={defaultValue}
-        className="w-full bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 dark:text-white rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 appearance-none bg-[url('data:image/svg+xml,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 fill=%27none%27 viewBox=%270 0 20 20%27%3e%3cpath stroke=%27%236B7280%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27 stroke-width=%271.5%27 d=%27M6 8l4 4 4-4%27/%3e%3c/svg%3e')] dark:bg-[url('data:image/svg+xml,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 fill=%27none%27 viewBox=%270 0 20 20%27%3e%3cpath stroke=%27%239CA3AF%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27 stroke-width=%271.5%27 d=%27M6 8l4 4 4-4%27/%3e%3c/svg%3e')]"
-         style={{ backgroundPosition: 'right 0.5rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
+        className="w-full bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 dark:text-white rounded-lg py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 appearance-none bg-no-repeat [background-position:right_0.5rem_center] [background-size:1.5em_1.5em] bg-[url('data:image/svg+xml,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 fill=%27none%27 viewBox=%270 0 20 20%27%3e%3cpath stroke=%27%236B7280%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27 stroke-width=%271.5%27 d=%27M6 8l4 4 4-4%27/%3e%3c/svg%3e')] dark:bg-[url('data:image/svg+xml,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 fill=%27none%27 viewBox=%270 0 20 20%27%3e%3cpath stroke=%27%239CA3AF%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27 stroke-width=%271.5%27 d=%27M6 8l4 4 4-4%27/%3e%3c/svg%3e')]"
      >
         {children}
     </select>
@@ -32,7 +31,7 @@ const ToggleSwitch = ({ enabled, setEnabled }: {enabled: boolean, setEnabled: (e
     <button
         type="button"
         onClick={() => setEnabled(!enabled)}
-        className={`${enabled ? 'bg-green-600' : 'bg-gray-300'} relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-800`}
+        className={`${enabled ? 'bg-green-600' : 'bg-gray-300 dark:bg-gray-600'} relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-800`}
         role="switch"
         aria-checked={enabled}
     >
@@ -90,7 +89,7 @@ const Settings: React.FC<SettingsProps> = ({ theme, setTheme }) => {
                 <div className="flex items-center space-x-4">
                     <img className="h-16 w-16 rounded-full object-cover" src="https://i.pravatar.cc/100?u=ana-silva" alt="User Avatar" />
                     <div>
-                        <button className="text-sm font-semibold text-green-600 hover:text-green-500">Alterar Foto</button>
+                        <button className="text-sm font-semibold text-green-600 hover:text-green-500 dark:text-green-500 dark:hover:text-green-400">Alterar Foto</button>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">JPG, GIF ou PNG. 1MB max.</p>
                     </div>
                 </div>

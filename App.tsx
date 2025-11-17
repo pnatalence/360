@@ -7,9 +7,14 @@ import Products from './components/Products';
 import Settings from './components/Settings';
 import Company from './components/Company';
 import Chatbot from './components/Chatbot';
+import LandingPage from './components/LandingPage';
+import LoginPage from './components/LoginPage';
+import SignupPage from './components/SignupPage';
 import type { View } from './types';
 
 const App: React.FC = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authView, setAuthView] = useState<'landing' | 'login' | 'signup'>('landing');
   const [view, setView] = useState<View>('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -66,6 +71,16 @@ const App: React.FC = () => {
         return <Dashboard setView={handleSetView} />;
     }
   }, [view, initialAction, theme]);
+
+  if (!isAuthenticated) {
+    if (authView === 'login') {
+      return <LoginPage onLogin={() => setIsAuthenticated(true)} onGoToSignup={() => setAuthView('signup')} />;
+    }
+    if (authView === 'signup') {
+      return <SignupPage onSignup={() => setIsAuthenticated(true)} onGoToLogin={() => setAuthView('login')} />;
+    }
+    return <LandingPage onLogin={() => setAuthView('login')} onSignup={() => setAuthView('signup')} />;
+  }
 
   return (
     <>
