@@ -159,6 +159,8 @@ const tools = [
   { name: 'start_creating_client', description: 'Abre o formulário para começar a criar um novo cliente.' },
   { name: 'start_creating_product', description: 'Abre o formulário para começar a criar um novo produto ou serviço.' },
   { name: 'create_client', description: 'Cria um novo cliente com os detalhes fornecidos. Requer nome, email e NIF.', parameters: { type: Type.OBJECT, properties: { name: { type: Type.STRING }, email: { type: Type.STRING }, tax_id: { type: Type.STRING }, phone: { type: Type.STRING }, address: { type: Type.STRING }, city: { type: Type.STRING }, state: { type: Type.STRING }, zip: { type: Type.STRING }, country: { type: Type.STRING } }, required: ['name', 'email', 'tax_id'] } },
+  { name: 'find_client_to_edit', description: 'Encontra um cliente para editar. Leva o utilizador para a página de clientes com um filtro de pesquisa aplicado.', parameters: { type: Type.OBJECT, properties: { client_name: { type: Type.STRING, description: 'O nome do cliente a ser procurado para edição.' } }, required: ['client_name'] } },
+  { name: 'find_product_to_edit', description: 'Encontra um produto para editar. Leva o utilizador para a página de produtos com um filtro de pesquisa aplicado.', parameters: { type: Type.OBJECT, properties: { product_name_or_code: { type: Type.STRING, description: 'O nome ou código do produto a ser procurado para edição.' } }, required: ['product_name_or_code'] } },
 ];
 
 const systemInstruction = `É um assistente de faturação inteligente para a aplicação Clique 360. O seu objetivo é ajudar os utilizadores a gerir as suas faturas, clientes e produtos através da conversação. Pode:
@@ -166,7 +168,8 @@ const systemInstruction = `É um assistente de faturação inteligente para a ap
 2. Começar a criar novos clientes (abrindo o formulário).
 3. Criar um novo cliente diretamente se forem fornecidos o nome, email e NIF.
 4. Começar a criar novos produtos ou serviços.
-5. Navegar o utilizador para diferentes secções da aplicação (Início, Faturas, Clientes, Produtos, Empresa, Definições).
+5. Encontrar clientes ou produtos existentes para que o utilizador os possa editar.
+6. Navegar o utilizador para diferentes secções da aplicação (Início, Faturas, Clientes, Produtos, Empresa, Definições).
 Quando um utilizador pedir para realizar uma ação, use as ferramentas disponíveis. Peça sempre esclarecimentos se faltar informação. Se o utilizador pedir algo que não se enquadre nestas capacidades, como responder a perguntas de conhecimento geral ou realizar tarefas não relacionadas com a faturação, recuse educadamente e lembre-o das suas funções principais.`;
 
 app.post('/api/chat', async (req, res) => {

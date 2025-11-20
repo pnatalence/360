@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import type { Product } from '../types';
 import { getProducts, addProduct, updateProduct, deleteProduct, formatCurrency } from '../services/mockApi';
 import ProductForm from './ProductForm';
-import { TrashIcon, EditIcon } from './icons';
+import { TrashIcon, EditIcon, SearchIcon } from './icons';
+import ConfirmationModal from './ConfirmationModal';
 
 interface ProductsProps {
   initialAction?: string | null;
@@ -14,6 +15,11 @@ const Products: React.FC<ProductsProps> = ({ initialAction, clearInitialAction }
   const [loading, setLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Delete modal state
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<string | null>(null);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -31,8 +37,18 @@ const Products: React.FC<ProductsProps> = ({ initialAction, clearInitialAction }
         setEditingProduct(null);
         setIsFormOpen(true);
         clearInitialAction?.();
+    } else if (initialAction?.startsWith('search:')) {
+        setSearchTerm(initialAction.substring(7));
+        clearInitialAction?.();
     }
   }, [initialAction, clearInitialAction]);
+
+  const filteredProducts = useMemo(() => {
+    return products.filter(product =>
+      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.code.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [products, searchTerm]);
 
   const handleAddProduct = () => {
     setEditingProduct(null);
@@ -44,11 +60,18 @@ const Products: React.FC<ProductsProps> = ({ initialAction, clearInitialAction }
     setIsFormOpen(true);
   };
 
-  const handleDeleteProduct = async (productId: string) => {
-    if (window.confirm('Tem a certeza que quer apagar permanentemente este produto? Esta ação não pode ser desfeita.')) {
-        await deleteProduct(productId);
-        fetchProducts();
-    }
+  const handleDeleteClick = (productId: string) => {
+      setProductToDelete(productId);
+      setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+      if (productToDelete) {
+          await deleteProduct(productToDelete);
+          fetchProducts();
+          setDeleteModalOpen(false);
+          setProductToDelete(null);
+      }
   };
 
   const handleCloseForm = () => {
@@ -74,6 +97,22 @@ const Products: React.FC<ProductsProps> = ({ initialAction, clearInitialAction }
           Adicionar Produto
         </button>
       </div>
+
+       <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+        <div className="relative">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <SearchIcon className="w-5 h-5 text-gray-400" />
+            </div>
+            <input
+                type="text"
+                placeholder="Pesquisar por nome ou código..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                className="w-full bg-gray-50 dark:bg-gray-700 border-transparent rounded-lg py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+        </div>
+      </div>
+      
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
         <div className="overflow-x-auto">
           {loading ? (
@@ -90,7 +129,7 @@ const Products: React.FC<ProductsProps> = ({ initialAction, clearInitialAction }
               </tr>
             </thead>
             <tbody>
-              {products.map(product => (
+              {filteredProducts.map(product => (
                 <tr key={product.id} className="border-t border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 group">
                   <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{product.code}</td>
                   <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{product.name}</td>
@@ -101,7 +140,7 @@ const Products: React.FC<ProductsProps> = ({ initialAction, clearInitialAction }
                         <button onClick={() => handleEditProduct(product)} className="text-blue-600 hover:text-blue-800 p-1" aria-label={`Editar ${product.name}`}>
                             <EditIcon className="w-5 h-5" />
                         </button>
-                        <button onClick={() => handleDeleteProduct(product.id)} className="text-red-600 hover:text-red-800 p-1" aria-label={`Apagar ${product.name}`}>
+                        <button onClick={() => handleDeleteClick(product.id)} className="text-red-600 hover:text-red-800 p-1" aria-label={`Apagar ${product.name}`}>
                             <TrashIcon className="w-5 h-5"/>
                         </button>
                     </div>
@@ -114,6 +153,16 @@ const Products: React.FC<ProductsProps> = ({ initialAction, clearInitialAction }
         </div>
       </div>
       {isFormOpen && <ProductForm onClose={handleCloseForm} onSave={handleSaveProduct} product={editingProduct} />}
+      
+      <ConfirmationModal
+        isOpen={deleteModalOpen}
+        title="Apagar Produto"
+        message="Tem a certeza que quer apagar permanentemente este produto? Esta ação não pode ser desfeita."
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteModalOpen(false)}
+        confirmLabel="Apagar"
+        variant="danger"
+      />
     </div>
   );
 };

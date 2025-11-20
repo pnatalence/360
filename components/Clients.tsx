@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import type { Client } from '../types';
 import { getClients, addClient, updateClient, deleteClient } from '../services/mockApi';
-import { XIcon, TrashIcon, EditIcon } from './icons';
+import { XIcon, TrashIcon, EditIcon, SearchIcon } from './icons';
+import ConfirmationModal from './ConfirmationModal';
 
 interface ClientFormProps {
   onClose: () => void;
@@ -116,6 +117,11 @@ const Clients: React.FC<ClientsProps> = ({ initialAction, clearInitialAction }) 
   const [loading, setLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Delete modal state
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [clientToDelete, setClientToDelete] = useState<string | null>(null);
 
   const fetchClients = async () => {
     setLoading(true);
@@ -133,8 +139,19 @@ const Clients: React.FC<ClientsProps> = ({ initialAction, clearInitialAction }) 
         setEditingClient(null);
         setIsFormOpen(true);
         clearInitialAction?.();
+    } else if (initialAction?.startsWith('search:')) {
+        setSearchTerm(initialAction.substring(7));
+        clearInitialAction?.();
     }
   }, [initialAction, clearInitialAction]);
+
+  const filteredClients = useMemo(() => {
+    return clients.filter(client =>
+      client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.tax_id.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [clients, searchTerm]);
 
   const handleAddClient = () => {
     setEditingClient(null);
@@ -146,10 +163,17 @@ const Clients: React.FC<ClientsProps> = ({ initialAction, clearInitialAction }) 
     setIsFormOpen(true);
   };
 
-  const handleDeleteClient = async (clientId: string) => {
-    if (window.confirm('Tem a certeza que quer apagar permanentemente este cliente? Esta ação não pode ser desfeita.')) {
-        await deleteClient(clientId);
+  const handleDeleteClick = (clientId: string) => {
+      setClientToDelete(clientId);
+      setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (clientToDelete) {
+        await deleteClient(clientToDelete);
         fetchClients();
+        setDeleteModalOpen(false);
+        setClientToDelete(null);
     }
   };
 
@@ -176,6 +200,22 @@ const Clients: React.FC<ClientsProps> = ({ initialAction, clearInitialAction }) 
           Adicionar Cliente
         </button>
       </div>
+
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+        <div className="relative">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <SearchIcon className="w-5 h-5 text-gray-400" />
+            </div>
+            <input
+                type="text"
+                placeholder="Pesquisar por nome, email ou NIF..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                className="w-full bg-gray-50 dark:bg-gray-700 border-transparent rounded-lg py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+        </div>
+      </div>
+
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
         <div className="overflow-x-auto">
           {loading ? (
@@ -192,7 +232,7 @@ const Clients: React.FC<ClientsProps> = ({ initialAction, clearInitialAction }) 
               </tr>
             </thead>
             <tbody>
-              {clients.map(client => (
+              {filteredClients.map(client => (
                 <tr key={client.id} className="border-t border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 group">
                   <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{client.name}</td>
                   <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{client.email}</td>
@@ -203,7 +243,7 @@ const Clients: React.FC<ClientsProps> = ({ initialAction, clearInitialAction }) 
                         <button onClick={() => handleEditClient(client)} className="text-blue-600 hover:text-blue-800 p-1" aria-label={`Editar ${client.name}`}>
                             <EditIcon className="w-5 h-5" />
                         </button>
-                        <button onClick={() => handleDeleteClient(client.id)} className="text-red-600 hover:text-red-800 p-1" aria-label={`Apagar ${client.name}`}>
+                        <button onClick={() => handleDeleteClick(client.id)} className="text-red-600 hover:text-red-800 p-1" aria-label={`Apagar ${client.name}`}>
                             <TrashIcon className="w-5 h-5"/>
                         </button>
                     </div>
@@ -216,6 +256,16 @@ const Clients: React.FC<ClientsProps> = ({ initialAction, clearInitialAction }) 
         </div>
       </div>
       {isFormOpen && <ClientForm onClose={handleCloseForm} onSave={handleSaveClient} client={editingClient} />}
+      
+      <ConfirmationModal
+        isOpen={deleteModalOpen}
+        title="Apagar Cliente"
+        message="Tem a certeza que quer apagar permanentemente este cliente? Esta ação não pode ser desfeita."
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteModalOpen(false)}
+        confirmLabel="Apagar"
+        variant="danger"
+      />
     </div>
   );
 };

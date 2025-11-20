@@ -73,6 +73,12 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, setIsOpen, setView }) => {
         case 'start_creating_product':
           setView('products', 'create');
           return { success: true, message: 'Formulário de novo produto aberto.' };
+        case 'find_client_to_edit':
+          setView('clients', `search:${args.client_name}`);
+          return { success: true, message: `A procurar pelo cliente "${args.client_name}" para que o possa editar.` };
+        case 'find_product_to_edit':
+          setView('products', `search:${args.product_name_or_code}`);
+          return { success: true, message: `A procurar pelo produto "${args.product_name_or_code}" para que o possa editar.` };
         case 'create_client': {
             const clientData = {
                 name: args.name as string,
