@@ -38,6 +38,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, setIsOpen, setView }) => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
   
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -47,7 +48,19 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, setIsOpen, setView }) => {
     scrollToBottom();
   }, [messages]);
 
+  // Clean up abort controller on unmount
+  useEffect(() => {
+    return () => {
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+    };
+  }, []);
+
   const handleNewChat = () => {
+     if (abortControllerRef.current) {
+         abortControllerRef.current.abort();
+     }
      setMessages([
       {
         id: '1',
@@ -113,6 +126,13 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, setIsOpen, setView }) => {
     if (e) e.preventDefault();
     if (input.trim() === '' || isLoading) return;
 
+    // Abort previous request if active
+    if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+    }
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
       sender: 'user',
@@ -136,6 +156,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, setIsOpen, setView }) => {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ message: currentInput, history }),
+            signal: abortController.signal,
         });
 
         if (!response.ok || !response.body) {
@@ -154,7 +175,11 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, setIsOpen, setView }) => {
         let buffer = '';
         while (true) {
             const { value, done } = await reader.read();
-            if (done) break;
+            if (done) {
+                // Decode any remaining bytes
+                buffer += decoder.decode();
+                break;
+            }
 
             buffer += decoder.decode(value, { stream: true });
             
@@ -198,7 +223,11 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, setIsOpen, setView }) => {
             }
              setMessages(prev => prev.map(m => m.id === botMessageId ? {...m, text: finalBotResponseText } : m));
         }
-    } catch (error) {
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+          console.log('Fetch aborted');
+          return;
+      }
       console.error("API Error:", error);
       const errorMessage: ChatMessage = {
         id: Date.now().toString(),
@@ -208,6 +237,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, setIsOpen, setView }) => {
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {
+      abortControllerRef.current = null;
       setIsLoading(false);
     }
   };

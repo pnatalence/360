@@ -287,7 +287,8 @@ app.post('/api/chat', async (req, res) => {
 
             // Only send if we have meaningful data
             if (Object.keys(chunkData).length > 0) {
-                res.write(`data: ${JSON.stringify(chunkData)}\n\n`);
+                const jsonString = JSON.stringify(chunkData);
+                res.write('data: ' + jsonString + '\n\n');
             }
         }
         res.end();
@@ -298,7 +299,8 @@ app.post('/api/chat', async (req, res) => {
              res.status(500).json({ error: 'Failed to communicate with the AI model.' });
         } else {
             // If headers were already sent, try to send an error message in the stream
-            res.write(`data: ${JSON.stringify({ text: "\n[Erro no servidor: Interrupção da resposta. Por favor tente novamente.]" })}\n\n`);
+            const errorPayload = JSON.stringify({ text: "\n[Erro no servidor: Interrupção da resposta. Por favor tente novamente.]" });
+            res.write('data: ' + errorPayload + '\n\n');
             res.end();
         }
     }
