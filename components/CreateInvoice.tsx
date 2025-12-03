@@ -1,7 +1,9 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import type { Client, Product, InvoiceLine } from '../types';
 import { getClients, getProducts, addInvoice, formatCurrency } from '../services/mockApi';
 import { TrashIcon } from './icons';
+import LoadingModal from './LoadingModal';
 
 interface CreateInvoiceProps {
   onClose: () => void;
@@ -19,6 +21,7 @@ const CreateInvoice: React.FC<CreateInvoiceProps> = ({ onClose }) => {
     const [clients, setClients] = useState<Client[]>([]);
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
 
     // Invoice State
     const [selectedClient, setSelectedClient] = useState<Client | null>(null);
@@ -50,17 +53,22 @@ const CreateInvoice: React.FC<CreateInvoiceProps> = ({ onClose }) => {
             alert('Por favor, selecione um cliente.');
             return;
         }
-        await addInvoice({
-            client: selectedClient,
-            status,
-            date: new Date().toISOString(),
-            due_date: new Date(dueDate).toISOString(),
-            total: totals.total,
-            currency: 'AOA',
-            lines: invoiceLines,
-            discount
-        });
-        onClose();
+        setIsSaving(true);
+        try {
+            await addInvoice({
+                client: selectedClient,
+                status,
+                date: new Date().toISOString(),
+                due_date: new Date(dueDate).toISOString(),
+                total: totals.total,
+                currency: 'AOA',
+                lines: invoiceLines,
+                discount
+            });
+            onClose();
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const renderStepContent = () => {
@@ -134,6 +142,7 @@ const CreateInvoice: React.FC<CreateInvoiceProps> = ({ onClose }) => {
                     )}
                 </div>
             </div>
+            <LoadingModal isOpen={isSaving} message="A processar fatura..." />
         </div>
     );
 };

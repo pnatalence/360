@@ -4,6 +4,7 @@ import type { Invoice, InvoiceStatus } from '../types';
 import { getInvoices, formatCurrency } from '../services/mockApi';
 import InvoiceDetail from './InvoiceDetail';
 import CreateInvoice from './CreateInvoice';
+import { ExportIcon } from './icons';
 
 const InvoiceStatusBadge: React.FC<{ status: InvoiceStatus }> = ({ status }) => {
     const baseClasses = 'px-2.5 py-1 text-xs font-semibold rounded-full inline-flex items-center gap-1.5';
@@ -106,6 +107,64 @@ const Invoices: React.FC<InvoicesProps> = ({ initialAction, clearInitialAction }
     setDateRange({ start: '', end: '' });
   };
 
+  const handleExportCSV = () => {
+    if (filteredInvoices.length === 0) {
+        alert("Não existem dados para exportar com os filtros atuais.");
+        return;
+    }
+
+    // Define CSV Headers
+    const headers = [
+        "Número Fatura",
+        "Estado",
+        "Data Emissão",
+        "Data Vencimento",
+        "Nome Cliente",
+        "NIF Cliente",
+        "Total Líquido",
+        "Total Imposto",
+        "Total Fatura",
+        "Moeda",
+        "ATCUD"
+    ];
+
+    // Map data to CSV rows
+    const csvRows = filteredInvoices.map(inv => {
+        const subtotal = inv.lines.reduce((acc, line) => acc + line.line_total, 0);
+        const taxes = inv.lines.reduce((acc, line) => acc + (line.line_total * (line.tax_rate / 100)), 0);
+        
+        // Helper to escape quotes and wrap in quotes
+        const escape = (val: string | number | undefined) => `"${String(val || '').replace(/"/g, '""')}"`;
+
+        return [
+            escape(inv.number),
+            escape(inv.status),
+            escape(new Date(inv.date).toLocaleDateString('pt-PT')),
+            escape(new Date(inv.due_date).toLocaleDateString('pt-PT')),
+            escape(inv.client.name),
+            escape(inv.client.tax_id),
+            subtotal.toFixed(2),
+            taxes.toFixed(2),
+            inv.total.toFixed(2),
+            escape(inv.currency),
+            escape(inv.atcud)
+        ].join(',');
+    });
+
+    // Combine headers and rows with BOM for Excel UTF-8 compatibility
+    const csvContent = ['\uFEFF' + headers.join(','), ...csvRows].join('\n');
+
+    // Create download link
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `exportacao_faturas_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
 
   if (isCreating) {
     return <CreateInvoice onClose={() => setIsCreating(false)} />;
@@ -122,11 +181,21 @@ const Invoices: React.FC<InvoicesProps> = ({ initialAction, clearInitialAction }
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Faturas</h1>
-        <button onClick={() => setIsCreating(true)} className="mt-4 md:mt-0 bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow-sm hover:bg-green-700 transition-colors">
-          Criar Fatura
-        </button>
+        <div className="flex items-center space-x-3 w-full md:w-auto">
+            <button 
+                onClick={handleExportCSV}
+                disabled={loading || filteredInvoices.length === 0}
+                className="flex-1 md:flex-none flex items-center justify-center bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-semibold py-2 px-4 rounded-lg shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+                <ExportIcon className="w-5 h-5 mr-2" />
+                Exportar CSV
+            </button>
+            <button onClick={() => setIsCreating(true)} className="flex-1 md:flex-none bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow-sm hover:bg-green-700 transition-colors">
+            Criar Fatura
+            </button>
+        </div>
       </div>
 
        <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm space-y-4 md:space-y-0 md:flex md:items-center md:justify-between">

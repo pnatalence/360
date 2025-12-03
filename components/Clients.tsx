@@ -1,8 +1,10 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import type { Client } from '../types';
 import { getClients, addClient, updateClient, deleteClient } from '../services/mockApi';
 import { XIcon, TrashIcon, EditIcon, SearchIcon } from './icons';
 import ConfirmationModal from './ConfirmationModal';
+import LoadingModal from './LoadingModal';
 
 interface ClientFormProps {
   onClose: () => void;
@@ -118,6 +120,7 @@ const Clients: React.FC<ClientsProps> = ({ initialAction, clearInitialAction }) 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   // Delete modal state
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -170,10 +173,15 @@ const Clients: React.FC<ClientsProps> = ({ initialAction, clearInitialAction }) 
 
   const handleConfirmDelete = async () => {
     if (clientToDelete) {
-        await deleteClient(clientToDelete);
-        fetchClients();
-        setDeleteModalOpen(false);
-        setClientToDelete(null);
+        setIsSaving(true);
+        try {
+          await deleteClient(clientToDelete);
+          fetchClients();
+          setDeleteModalOpen(false);
+          setClientToDelete(null);
+        } finally {
+          setIsSaving(false);
+        }
     }
   };
 
@@ -183,13 +191,18 @@ const Clients: React.FC<ClientsProps> = ({ initialAction, clearInitialAction }) 
   };
 
   const handleSaveClient = async (clientData: Omit<Client, 'id' | 'createdAt'>, clientId?: string) => {
-    if (clientId) {
-      await updateClient(clientId, clientData);
-    } else {
-      await addClient(clientData);
+    setIsSaving(true);
+    try {
+      if (clientId) {
+        await updateClient(clientId, clientData);
+      } else {
+        await addClient(clientData);
+      }
+      handleCloseForm();
+      fetchClients();
+    } finally {
+      setIsSaving(false);
     }
-    handleCloseForm();
-    fetchClients();
   };
 
   return (
@@ -266,6 +279,7 @@ const Clients: React.FC<ClientsProps> = ({ initialAction, clearInitialAction }) 
         confirmLabel="Apagar"
         variant="danger"
       />
+      <LoadingModal isOpen={isSaving} message="A processar..." />
     </div>
   );
 };

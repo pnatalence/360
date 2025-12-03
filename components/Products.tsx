@@ -1,9 +1,11 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import type { Product } from '../types';
 import { getProducts, addProduct, updateProduct, deleteProduct, formatCurrency } from '../services/mockApi';
 import ProductForm from './ProductForm';
 import { TrashIcon, EditIcon, SearchIcon } from './icons';
 import ConfirmationModal from './ConfirmationModal';
+import LoadingModal from './LoadingModal';
 
 interface ProductsProps {
   initialAction?: string | null;
@@ -16,6 +18,7 @@ const Products: React.FC<ProductsProps> = ({ initialAction, clearInitialAction }
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   // Delete modal state
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -67,10 +70,15 @@ const Products: React.FC<ProductsProps> = ({ initialAction, clearInitialAction }
 
   const handleConfirmDelete = async () => {
       if (productToDelete) {
-          await deleteProduct(productToDelete);
-          fetchProducts();
-          setDeleteModalOpen(false);
-          setProductToDelete(null);
+          setIsSaving(true);
+          try {
+            await deleteProduct(productToDelete);
+            fetchProducts();
+            setDeleteModalOpen(false);
+            setProductToDelete(null);
+          } finally {
+            setIsSaving(false);
+          }
       }
   };
 
@@ -80,13 +88,18 @@ const Products: React.FC<ProductsProps> = ({ initialAction, clearInitialAction }
   };
 
   const handleSaveProduct = async (productData: Omit<Product, 'id' | 'code' | 'active'>, productId?: string) => {
-    if (productId) {
-      await updateProduct(productId, productData);
-    } else {
-      await addProduct(productData);
+    setIsSaving(true);
+    try {
+      if (productId) {
+        await updateProduct(productId, productData);
+      } else {
+        await addProduct(productData);
+      }
+      handleCloseForm();
+      fetchProducts();
+    } finally {
+      setIsSaving(false);
     }
-    handleCloseForm();
-    fetchProducts();
   };
 
   return (
@@ -163,6 +176,7 @@ const Products: React.FC<ProductsProps> = ({ initialAction, clearInitialAction }
         confirmLabel="Apagar"
         variant="danger"
       />
+      <LoadingModal isOpen={isSaving} message="A processar..." />
     </div>
   );
 };

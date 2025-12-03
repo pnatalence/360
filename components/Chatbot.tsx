@@ -160,6 +160,11 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, setIsOpen, setView }) => {
         });
 
         if (!response.ok || !response.body) {
+             // If we get an HTML response (likely 404/500 page from Render), throw specific error
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.indexOf("application/json") === -1) {
+                 throw new Error("Invalid server response. Please check API configuration.");
+            }
             throw new Error('Network response was not ok.');
         }
 
@@ -173,28 +178,29 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, setIsOpen, setView }) => {
         setMessages(prev => [...prev, { id: botMessageId, sender: 'bot', text: '...', timestamp: new Date().toISOString() }]);
 
         let buffer = '';
-        while (true) {
-            const { value, done } = await reader.read();
-            if (done) {
-                // Decode any remaining bytes
-                buffer += decoder.decode();
-                break;
-            }
 
-            buffer += decoder.decode(value, { stream: true });
+        const processBuffer = (isFinal = false) => {
+            // Split by newline, handling \r\n or \n for cross-platform compatibility
+            const lines = buffer.split(/\r?\n/);
             
-            // Process the buffer line by line
-            const lines = buffer.split('\n');
-            buffer = lines.pop() || ''; // Keep the last partial line in the buffer
+            // If not final, keep the last line in buffer as it might be incomplete
+            buffer = isFinal ? '' : lines.pop() || ''; 
 
             for (const line of lines) {
                 const trimmedLine = line.trim();
+                // Strict check for SSE data prefix
                 if (!trimmedLine || !trimmedLine.startsWith('data: ')) continue;
 
                 try {
                     const jsonStr = trimmedLine.substring(6).trim();
                     if (!jsonStr) continue;
                     
+                    // Extra safety: ensure it looks like a JSON object before parsing
+                    if (!jsonStr.startsWith('{')) {
+                        console.warn('Ignoring non-JSON SSE chunk:', jsonStr);
+                        continue;
+                    }
+
                     const data = JSON.parse(jsonStr);
                     
                     if (data.text) {
@@ -208,6 +214,19 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, setIsOpen, setView }) => {
                     console.error("Error parsing SSE JSON chunk:", parseError, "Chunk:", trimmedLine);
                 }
             }
+        };
+
+        while (true) {
+            const { value, done } = await reader.read();
+            if (done) {
+                // Decode any remaining bytes and flush buffer
+                buffer += decoder.decode();
+                processBuffer(true);
+                break;
+            }
+
+            buffer += decoder.decode(value, { stream: true });
+            processBuffer(false);
         }
         
         // Handle any remaining text in buffer (though unlikely with proper SSE \n\n)
@@ -235,7 +254,14 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, setIsOpen, setView }) => {
         text: 'Desculpe, ocorreu um erro de comunicação com o servidor. Por favor, tente novamente.',
         timestamp: new Date().toISOString(),
       };
-      setMessages(prev => [...prev, errorMessage]);
+      // If we added a placeholder, replace it. Otherwise add new.
+      setMessages(prev => {
+          const hasPlaceholder = prev.some(m => m.text === '...');
+          if (hasPlaceholder) {
+              return prev.map(m => m.text === '...' ? errorMessage : m);
+          }
+          return [...prev, errorMessage];
+      });
     } finally {
       abortControllerRef.current = null;
       setIsLoading(false);
