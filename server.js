@@ -297,6 +297,8 @@ app.post('/api/chat', async (req, res) => {
         if (!res.headersSent) {
              res.status(500).json({ error: 'Failed to communicate with the AI model.' });
         } else {
+            // If headers were already sent, try to send an error message in the stream
+            res.write(`data: ${JSON.stringify({ text: "\n[Erro no servidor: Interrupção da resposta. Por favor tente novamente.]" })}\n\n`);
             res.end();
         }
     }

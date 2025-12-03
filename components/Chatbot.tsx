@@ -158,31 +158,34 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, setIsOpen, setView }) => {
 
             buffer += decoder.decode(value, { stream: true });
             
-            const parts = buffer.split('\n\n');
-            buffer = parts.pop() || ''; // Keep the last, possibly incomplete, part
+            // Process the buffer line by line
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || ''; // Keep the last partial line in the buffer
 
-            for (const part of parts) {
-                if (part.startsWith('data: ')) {
-                    try {
-                        const jsonStr = part.substring(6).trim();
-                        if (!jsonStr) continue;
-                        const data = JSON.parse(jsonStr);
-                        
-                        if (data.text) {
-                            botMessageText += data.text;
-                            setMessages(prev => prev.map(m => m.id === botMessageId ? {...m, text: botMessageText} : m));
-                        }
-                        if (data.functionCalls) {
-                            functionCalls.push(...data.functionCalls);
-                        }
-                    } catch (parseError) {
-                        console.error("Erro ao analisar o pedaço de dados do stream: ", part.substring(6), parseError);
+            for (const line of lines) {
+                const trimmedLine = line.trim();
+                if (!trimmedLine || !trimmedLine.startsWith('data: ')) continue;
+
+                try {
+                    const jsonStr = trimmedLine.substring(6).trim();
+                    if (!jsonStr) continue;
+                    
+                    const data = JSON.parse(jsonStr);
+                    
+                    if (data.text) {
+                        botMessageText += data.text;
+                        setMessages(prev => prev.map(m => m.id === botMessageId ? {...m, text: botMessageText} : m));
                     }
+                    if (data.functionCalls) {
+                        functionCalls.push(...data.functionCalls);
+                    }
+                } catch (parseError) {
+                    console.error("Error parsing SSE JSON chunk:", parseError, "Chunk:", trimmedLine);
                 }
             }
         }
         
-        // Handle any remaining text in buffer (though less likely with SSE)
+        // Handle any remaining text in buffer (though unlikely with proper SSE \n\n)
         if (botMessageText === '...') {
              setMessages(prev => prev.map(m => m.id === botMessageId ? {...m, text: ''} : m));
         }
@@ -191,8 +194,6 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, setIsOpen, setView }) => {
             let finalBotResponseText = botMessageText ? botMessageText + '\n' : '';
             for(const call of functionCalls) {
                 const result = await handleFunctionCall(call);
-                // For simplicity, we're assuming the model doesn't need the function result back
-                // A more complex implementation would send the result back to the chat
                 finalBotResponseText += result.message;
             }
              setMessages(prev => prev.map(m => m.id === botMessageId ? {...m, text: finalBotResponseText } : m));
