@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import type { Invoice, InvoiceStatus, View, Client, Product } from '../types';
 import { getInvoices, getClients, getProducts, formatCurrency } from '../services/mockApi';
@@ -201,14 +202,14 @@ const Dashboard: React.FC<{setView: (view: View, action?: string) => void;}> = (
                 </button>
                  <button className="bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow-sm hover:bg-green-700 transition-colors text-sm inline-flex items-center">
                     <ExportIcon className="w-5 h-5 mr-2" />
-                    Exportar
+                    Exportar SAF-T (PT)
                 </button>
             </div>
         </div>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard title="Saldo Total" value={formatCurrency(1250000, 'AOA')} icon={<svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 6l3 6h12l3-6H3zM5.5 15a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM18.5 15a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"/></svg>} color="bg-purple-100" />
-        <StatCard title="Rendimento Mensal" value={formatCurrency(320000, 'AOA')} icon={<svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v.01" /></svg>} color="bg-orange-100" />
+        <StatCard title="Saldo Total" value={formatCurrency(1250000, 'EUR')} icon={<svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 6l3 6h12l3-6H3zM5.5 15a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM18.5 15a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"/></svg>} color="bg-purple-100" />
+        <StatCard title="Rendimento Mensal" value={formatCurrency(320000, 'EUR')} icon={<svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v.01" /></svg>} color="bg-orange-100" />
         <StatCard title="Clientes" value={clientCount.toString()} icon={<SidebarIcon.Clients className="w-6 h-6 text-pink-600" />} color="bg-pink-100" />
         <StatCard title="Produtos/Serviços" value={productCount.toString()} icon={<SidebarIcon.Products className="w-6 h-6 text-blue-600" />} color="bg-blue-100" />
       </div>
@@ -218,7 +219,7 @@ const Dashboard: React.FC<{setView: (view: View, action?: string) => void;}> = (
                 <div>
                     <h2 className="text-xl font-bold text-gray-900 dark:text-white">Visão Geral de Faturas</h2>
                     <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
-                        {formatCurrency(chartStats.total, 'AOA')}
+                        {formatCurrency(chartStats.total, 'EUR')}
                         <span className={`text-sm font-medium ${chartStats.percentageChange >= 0 ? 'text-green-500 dark:text-green-400' : 'text-red-500 dark:text-red-400'} align-text-bottom ml-2`}>
                             {chartStats.percentageChange >= 0 ? '+' : ''}{chartStats.percentageChange.toFixed(1)}%
                         </span>
@@ -296,7 +297,7 @@ const Dashboard: React.FC<{setView: (view: View, action?: string) => void;}> = (
                 {recentProducts.map(product => (
                     <button key={product.id} onClick={() => setView('invoices')} className="w-full text-left bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 p-4 rounded-lg transition-colors">
                         <p className="font-semibold text-gray-800 dark:text-gray-200 truncate">{product.name}</p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">{formatCurrency(product.unit_price, 'AOA')}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{formatCurrency(product.unit_price, 'EUR')}</p>
                     </button>
                 ))}
              </div>

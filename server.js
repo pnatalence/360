@@ -1,3 +1,4 @@
+
 import express from 'express';
 import cors from 'cors';
 import 'dotenv/config';
@@ -9,10 +10,10 @@ app.use(express.json());
 
 // --- In-Memory Database (from mockApi.ts) ---
 let clients = [
-  { id: '1', name: 'Kappy Bara', email: 'Pay@Kappybara.ai', tax_id: '0123892V', phone: '+1 808-123-4567', address: '95-1249 Meheula Pkwy', city: 'Mililani', state: 'Hawaii', zip: '96789', country: 'USA', createdAt: '2024-01-24T09:30:00Z', avatar: 'https://i.imgur.com/r5L5tA5.png' },
-  { id: '2', name: 'Digital Wave', email: 'hello@digitalwave.com', tax_id: 'PT508765432', phone: '+351 22 987 6543', address: 'Avenida da Liberdade, 45', city: 'Porto', state: 'Porto', zip: '4000-002', country: 'Portugal', createdAt: '2023-02-20T14:00:00Z' },
-  { id: '3', name: 'Quantum Leap', email: 'support@quantum.io', tax_id: 'PT510987654', phone: '+351 21 555 1234', address: 'Praça do Comércio, 78', city: 'Lisboa', state: 'Lisboa', zip: '1100-148', country: 'Portugal', createdAt: '2023-03-10T11:45:00Z' },
-  { id: '4', name: 'Inova Tech', email: 'contact@inova.tech', tax_id: 'PT509123456', phone: '+351 21 876 5432', address: 'Rua das Flores, 123', city: 'Lisboa', state: 'Lisboa', zip: '1000-001', country: 'Portugal', createdAt: '2023-01-15T09:30:00Z' },
+  { id: '1', name: 'Kappy Bara', email: 'Pay@Kappybara.ai', tax_id: '501238920', phone: '+1 808-123-4567', address: '95-1249 Meheula Pkwy', city: 'Mililani', state: 'Hawaii', zip: '96789', country: 'USA', createdAt: '2024-01-24T09:30:00Z', avatar: 'https://i.imgur.com/r5L5tA5.png' },
+  { id: '2', name: 'Digital Wave Lda', email: 'hello@digitalwave.com', tax_id: '508765432', phone: '+351 22 987 6543', address: 'Avenida da Liberdade, 45', city: 'Porto', state: 'Porto', zip: '4000-002', country: 'Portugal', createdAt: '2023-02-20T14:00:00Z' },
+  { id: '3', name: 'Quantum Leap SA', email: 'support@quantum.io', tax_id: '510987654', phone: '+351 21 555 1234', address: 'Praça do Comércio, 78', city: 'Lisboa', state: 'Lisboa', zip: '1100-148', country: 'Portugal', createdAt: '2023-03-10T11:45:00Z' },
+  { id: '4', name: 'Inova Tech Unipessoal', email: 'contact@inova.tech', tax_id: '509123456', phone: '+351 21 876 5432', address: 'Rua das Flores, 123', city: 'Lisboa', state: 'Lisboa', zip: '1000-001', country: 'Portugal', createdAt: '2023-01-15T09:30:00Z' },
 ];
 
 let products = [
@@ -22,13 +23,81 @@ let products = [
     { id: 'prod-004', name: 'Pacote de Design UI/UX', code: 'UIUX-PKG', description: 'Design de interface e experiência do utilizador', unit_price: 3500, tax_rate: 23, barcode: '4444444444444', active: true },
 ];
 
+// Função auxiliar para gerar "Hash" simulado
+const generateFakeHash = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+    let result = '';
+    for (let i = 0; i < 172; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result + '==';
+};
+
+const generateATCUD = (seq) => `CSDT-${seq}`;
+
 let invoices = [
-    { id: 'inv-001', number: '000001', client: clients[0], status: 'paid', date: '2024-01-24T00:00:00Z', due_date: '2025-02-07T00:00:00Z', total: 3000, currency: 'USD', discount: 500, lines: [{ id: 'line-1a', product_id: 'prod-004', description: 'UI Design Work', quantity: 2, unit_price: 1000, tax_rate: 0, line_total: 2000 }, { id: 'line-1b', product_id: 'prod-001', description: 'No-code Development', quantity: 1, unit_price: 1500, tax_rate: 0, line_total: 1500 }] },
-    { id: 'inv-002', number: '2024-002', client: clients[1], status: 'issued', date: '2024-05-15T00:00:00Z', due_date: '2024-06-15T00:00:00Z', total: 1845, currency: 'AOA', lines: [{ id: 'line-2', product_id: 'prod-002', description: 'SEO Consulting', quantity: 1, unit_price: 1500, tax_rate: 23, line_total: 1500 }] },
-    { id: 'inv-003', number: '2024-003', client: clients[2], status: 'draft', date: '2024-06-01T00:00:00Z', due_date: '2024-07-01T00:00:00Z', total: 4305, currency: 'AOA', lines: [{ id: 'line-3', product_id: 'prod-004', description: 'UI/UX Design Package', quantity: 1, unit_price: 3500, tax_rate: 23, line_total: 3500 }] },
-    { id: 'inv-004', number: '2024-004', client: clients[3], status: 'cancelled', date: '2024-04-20T00:00:00Z', due_date: '2024-05-20T00:00:00Z', total: 123, currency: 'AOA', lines: [{ id: 'line-4', product_id: 'prod-003', description: 'Cloud Hosting', quantity: 1, unit_price: 100, tax_rate: 23, line_total: 100 }] },
-    { id: 'inv-005', number: '2024-005', client: clients[1], status: 'paid', date: '2024-03-10T00:00:00Z', due_date: '2024-04-10T00:00:00Z', total: 6273, currency: 'AOA', lines: [{ id: 'line-5a', product_id: 'prod-001', description: 'Web Development Services', quantity: 1, unit_price: 5000, tax_rate: 23, line_total: 5000 }, { id: 'line-5b', product_id: 'prod-003', description: 'Cloud Hosting', quantity: 1, unit_price: 100, tax_rate: 23, line_total: 100 }] },
-    { id: 'inv-006', number: '2024-006', client: clients[2], status: 'issued', date: '2024-06-05T00:00:00Z', due_date: '2024-07-05T00:00:00Z', total: 1500, currency: 'AOA', lines: [{ id: 'line-6', product_id: 'prod-002', description: 'SEO Consulting', quantity: 1, unit_price: 1500, tax_rate: 0, line_total: 1500 }] },
+    { 
+        id: 'inv-001', 
+        number: 'FT 2024/1', 
+        client: clients[0], 
+        status: 'paid', 
+        date: '2024-01-24T00:00:00Z', 
+        due_date: '2025-02-07T00:00:00Z', 
+        total: 3000, 
+        currency: 'EUR', 
+        discount: 500, 
+        lines: [{ id: 'line-1a', product_id: 'prod-004', description: 'UI Design Work', quantity: 2, unit_price: 1000, tax_rate: 0, line_total: 2000 }, { id: 'line-1b', product_id: 'prod-001', description: 'No-code Development', quantity: 1, unit_price: 1500, tax_rate: 0, line_total: 1500 }],
+        atcud: 'CSDT-1',
+        hash: generateFakeHash(),
+        hash_control: 'O4d2',
+        certification_number: '9999/AT'
+    },
+    { 
+        id: 'inv-002', 
+        number: 'FT 2024/2', 
+        client: clients[1], 
+        status: 'issued', 
+        date: '2024-05-15T00:00:00Z', 
+        due_date: '2024-06-15T00:00:00Z', 
+        total: 1845, 
+        currency: 'EUR', 
+        lines: [{ id: 'line-2', product_id: 'prod-002', description: 'SEO Consulting', quantity: 1, unit_price: 1500, tax_rate: 23, line_total: 1500 }],
+        atcud: 'CSDT-2',
+        hash: generateFakeHash(),
+        hash_control: '9sK1',
+        certification_number: '9999/AT'
+    },
+    { 
+        id: 'inv-003', 
+        number: 'FT 2024/3', 
+        client: clients[2], 
+        status: 'draft', 
+        date: '2024-06-01T00:00:00Z', 
+        due_date: '2024-07-01T00:00:00Z', 
+        total: 4305, 
+        currency: 'EUR', 
+        lines: [{ id: 'line-3', product_id: 'prod-004', description: 'UI/UX Design Package', quantity: 1, unit_price: 3500, tax_rate: 23, line_total: 3500 }],
+        // Drafts usually don't have hash yet in PT law until closed, but for structure we keep empty
+        atcud: '',
+        hash: '',
+        hash_control: '',
+        certification_number: ''
+    },
+    { 
+        id: 'inv-004', 
+        number: 'FT 2024/4', 
+        client: clients[3], 
+        status: 'cancelled', 
+        date: '2024-04-20T00:00:00Z', 
+        due_date: '2024-05-20T00:00:00Z', 
+        total: 123, 
+        currency: 'EUR', 
+        lines: [{ id: 'line-4', product_id: 'prod-003', description: 'Cloud Hosting', quantity: 1, unit_price: 100, tax_rate: 23, line_total: 100 }],
+        atcud: 'CSDT-4',
+        hash: generateFakeHash(),
+        hash_control: 'Pl2x',
+        certification_number: '9999/AT'
+    },
 ];
 
 let companyPaymentMethods = {
@@ -126,10 +195,17 @@ app.get('/api/invoices', (req, res) => {
 
 app.post('/api/invoices', (req, res) => {
     const invoiceData = req.body;
+    const isDraft = invoiceData.status === 'draft';
+    
     const newInvoice = {
         id: `inv-${Date.now()}`,
-        number: `2024-00${invoices.length + 1}`,
+        number: isDraft ? 'RASCUNHO' : `FT 2024/${invoices.length + 1}`,
         ...invoiceData,
+        // PT Compliance Fields
+        atcud: isDraft ? undefined : generateATCUD(invoices.length + 1),
+        hash: isDraft ? undefined : generateFakeHash(),
+        hash_control: isDraft ? undefined : 'Az91', // Simulated
+        certification_number: isDraft ? undefined : '9999/AT'
     };
     invoices.unshift(newInvoice);
     res.status(201).json(newInvoice);
@@ -151,7 +227,6 @@ app.post('/api/company/payment-methods', (req, res) => {
 // --- Gemini Chat Proxy ---
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-const model = ai.models['gemini-2.5-flash'];
 
 const tools = [
   { name: 'navigate_to', description: 'Navega para uma secção específica da aplicação.', parameters: { type: Type.OBJECT, properties: { view: { type: Type.STRING, description: 'A secção para a qual navegar.', enum: ['dashboard', 'invoices', 'clients', 'products', 'company', 'settings'] } }, required: ['view'] } },
@@ -176,28 +251,54 @@ app.post('/api/chat', async (req, res) => {
     try {
         const { message, history } = req.body;
 
-        const chat = model.startChat({
-            history: history.map(msg => ({
-                role: msg.sender === 'user' ? 'user' : 'model',
-                parts: [{ text: msg.text }]
-            })),
-            tools: [{ functionDeclarations: tools }],
-            systemInstruction: { parts: [{ text: systemInstruction }] }
+        // Format history correctly for the SDK
+        const formattedHistory = history.map(msg => ({
+            role: msg.sender === 'user' ? 'user' : 'model',
+            parts: [{ text: msg.text }]
+        }));
+
+        const chat = ai.chats.create({
+            model: 'gemini-2.5-flash',
+            history: formattedHistory,
+            config: {
+                systemInstruction: systemInstruction,
+                tools: [{ functionDeclarations: tools }],
+            }
         });
 
-        const result = await chat.sendMessageStream(message);
+        const result = await chat.sendMessageStream({ message: message });
 
         res.setHeader('Content-Type', 'text/event-stream');
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Connection', 'keep-alive');
 
-        for await (const chunk of result.stream) {
-            res.write(`data: ${JSON.stringify(chunk)}\n\n`);
+        for await (const chunk of result) {
+            const chunkData = {};
+            
+            // Safely extract text
+            if (chunk.text) {
+                chunkData.text = chunk.text;
+            }
+            
+            // Safely extract function calls
+            if (chunk.functionCalls) {
+                chunkData.functionCalls = chunk.functionCalls;
+            }
+
+            // Only send if we have meaningful data
+            if (Object.keys(chunkData).length > 0) {
+                res.write(`data: ${JSON.stringify(chunkData)}\n\n`);
+            }
         }
         res.end();
     } catch (error) {
         console.error('Chat API error:', error);
-        res.status(500).json({ error: 'Failed to communicate with the AI model.' });
+        // If headers are not sent yet, send a JSON error
+        if (!res.headersSent) {
+             res.status(500).json({ error: 'Failed to communicate with the AI model.' });
+        } else {
+            res.end();
+        }
     }
 });
 

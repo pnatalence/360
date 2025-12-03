@@ -1,5 +1,5 @@
+
 import React, { useState, useRef, useEffect, FormEvent } from 'react';
-import { FunctionCall } from '@google/genai';
 import { addClient } from '../services/mockApi';
 import { ArrowRightIcon, BotLogoIcon, XIcon } from './icons';
 import type { ChatMessage, View } from '../types';
@@ -8,6 +8,12 @@ interface ChatbotProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   setView: (view: View, action?: string) => void;
+}
+
+// Define local interface for FunctionCall to avoid import issues
+interface FunctionCall {
+  name: string;
+  args: Record<string, any>;
 }
 
 const timeAgo = (dateString: string) => {
@@ -121,8 +127,12 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, setIsOpen, setView }) => {
     setInput('');
     setIsLoading(true);
 
+    // Determine API URL based on environment
+    // Use optional chaining to prevent crashes if env is undefined
+    const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || '/api';
+
     try {
-        const response = await fetch('/api/chat', {
+        const response = await fetch(`${API_BASE_URL}/chat`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ message: currentInput, history }),
@@ -154,7 +164,9 @@ const Chatbot: React.FC<ChatbotProps> = ({ isOpen, setIsOpen, setView }) => {
             for (const part of parts) {
                 if (part.startsWith('data: ')) {
                     try {
-                        const data = JSON.parse(part.substring(6));
+                        const jsonStr = part.substring(6).trim();
+                        if (!jsonStr) continue;
+                        const data = JSON.parse(jsonStr);
                         
                         if (data.text) {
                             botMessageText += data.text;

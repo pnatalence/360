@@ -1,3 +1,4 @@
+
 export type View = 'dashboard' | 'invoices' | 'clients' | 'products' | 'company' | 'settings';
 
 export interface Client {
@@ -49,6 +50,12 @@ export interface Invoice {
   currency: string;
   lines: InvoiceLine[];
   discount?: number;
+  // Campos PT AT
+  atcud?: string; // Código único do documento
+  hash?: string; // Assinatura digital (simulada)
+  hash_control?: string; // 4 caracteres de controlo
+  qr_code_base64?: string; // QR Code obrigatório
+  certification_number?: string; // Nº Certificação software
 }
 
 export interface BotAction {

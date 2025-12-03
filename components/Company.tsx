@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { getCompanyPaymentMethods, saveCompanyPaymentMethods } from '../services/mockApi';
 
-const FormRow: React.FC<{ label: string }> = ({ label, children }) => (
+const FormRow: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
     <div className="grid grid-cols-1 md:grid-cols-3 items-start md:items-center gap-2 md:gap-4">
         <label className="text-sm font-medium text-gray-600 dark:text-gray-400">{label}</label>
         <div className="md:col-span-2">{children}</div>
@@ -35,7 +36,7 @@ const ToggleSwitch = ({ enabled, setEnabled }: {enabled: boolean, setEnabled: (e
     </button>
 );
 
-const SectionCard: React.FC<{ title: string, footer?: React.ReactNode }> = ({ title, children, footer }) => (
+const SectionCard: React.FC<{ title: string, footer?: React.ReactNode; children: React.ReactNode }> = ({ title, children, footer }) => (
     <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
         <div className="p-6">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">{title}</h2>

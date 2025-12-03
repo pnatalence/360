@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import type { Invoice, InvoiceStatus } from '../types';
 import { getInvoices, formatCurrency } from '../services/mockApi';
@@ -199,7 +200,23 @@ const Invoices: React.FC<InvoicesProps> = ({ initialAction, clearInitialAction }
                   <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">{formatCurrency(invoice.total, invoice.currency)}</td>
                   <td className="px-4 py-3 text-sm"><InvoiceStatusBadge status={invoice.status} /></td>
                   <td className="px-4 py-3 text-sm text-right">
-                    <button className="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">...</button>
+                     <div className="flex justify-end space-x-2">
+                         <button onClick={() => setSelectedInvoice(invoice)} className="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white text-xs font-medium">
+                             Ver
+                         </button>
+                         {/* Compliance: Can only delete drafts */}
+                         {invoice.status === 'draft' && (
+                            <button className="text-red-500 hover:text-red-700 dark:text-red-400 text-xs font-medium">
+                                Apagar
+                            </button>
+                         )}
+                         {/* Compliance: Can only void (cancel) issued invoices, not delete */}
+                         {invoice.status !== 'draft' && invoice.status !== 'cancelled' && (
+                             <button className="text-red-500 hover:text-red-700 dark:text-red-400 text-xs font-medium">
+                                 Anular
+                             </button>
+                         )}
+                     </div>
                   </td>
                 </tr>
               ))}

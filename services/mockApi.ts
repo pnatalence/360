@@ -1,6 +1,9 @@
+
 import type { Client, Product, Invoice } from '../types';
 
-const API_BASE_URL = '/api'; // Use relative URL
+// Em desenvolvimento (Vite) usa o proxy '/api'. Em produção usa a URL completa do backend.
+// Use optional chaining to prevent crashes if env is undefined
+const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || '/api';
 
 export const formatCurrency = (amount: number, currency: string) => {
     return new Intl.NumberFormat('pt-PT', {
@@ -79,8 +82,15 @@ const companyPaymentMethods = {
     cash: false,
 };
 
+// Nota: Estas funções fingem persistência local se a API falhar ou não estiver implementada para company
+// Mas idealmente devem bater no endpoint
 export const getCompanyPaymentMethods = (): Promise<typeof companyPaymentMethods> => {
-    return fetch(`${API_BASE_URL}/company/payment-methods`).then(res => res.json());
+    return fetch(`${API_BASE_URL}/company/payment-methods`)
+        .then(res => {
+            if (!res.ok) throw new Error('Network response was not ok');
+            return res.json();
+        })
+        .catch(() => Promise.resolve(companyPaymentMethods)); 
 };
 
 export const saveCompanyPaymentMethods = (methods: typeof companyPaymentMethods): Promise<void> => {
